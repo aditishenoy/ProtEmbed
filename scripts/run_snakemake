@@ -1,0 +1,22 @@
+rule all_swissprot_ids:
+	input:	'src_data/uniprot_sprot.xml'
+	output:	'src_data/swissprot_ids'
+	shell:	'python get_swissprot_ids.py {input} > {output}'
+
+rule shuffle:
+	input:	'src_data/swissprot_ids'
+	output: 'swissprot_ids_shuf'
+	shell: 'shuf {input} > {output}'
+
+rule head_2000:
+	input: 'swissprot_ids_shuf'
+	output:	'protset_1'
+	shell:	'head -n 2000 {input} > {output}'
+
+rule tail_2000:
+	input: 'swissprot_ids_shuf'
+	output:	'protset_2'
+	shell:	'tail -n 2000 {input} > {output}'
+
+rule clean:
+	shell:	'rm swissprot_ids_shuf'
