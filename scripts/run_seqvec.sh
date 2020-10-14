@@ -11,7 +11,7 @@ for filename in *.fa;
                 echo "$filename"
         else
                 echo "${filename%.*}"
-                seqvec -i $filename -o "${filename%.*}".npz
+                seqvec -i $filename -o "${filename%.*}".npz --protein True
         fi
     done
 ~                                                                                                                                                                                                                                                                                 
