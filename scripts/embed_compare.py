@@ -20,166 +20,161 @@ matplotlib.use('agg')
 def main():
 
     parser = argparse.ArgumentParser(description="Metrics to compare embeddings")
-    parser.add_argument("--type", type=str, help="What type of pairs are being compared? (homology-based, NC-terminal, split-proteins)")
     parser.add_argument("--pairs", default=None, type=str, help="")
     parser.add_argument("--emd_dirr1", default=None, type=str, help="")
     parser.add_argument("--emd_dirr2", default=None, type=str, help="")
     parser.add_argument("--comment", type=str, help="")
 
     args = parser.parse_args()
-    diff_lst=[]
+    path = "/home/a/aditi/pfs/current_projects/ProtEmbed/data/"
 
-    if args.type == "Homology":
-      print ("Homologous protein pairs")
-      
-      pairs1 = open(args.pairs, 'r')
-      lines_pairs1 = pairs1.readlines()
-      
-      for i in lines_pairs1:
-         i = i.split()
-         P1 = i[0]
-         P2 = i[1]
-         #print (P1, P2)
-
-         epath1 = os.path.join(args.emd_dirr1 + P1 + '.npz')
-         emd1 = np.load(epath1)
-
-         epath2 = os.path.join(args.emd_dirr2 + P2 + '.npz')
-         emd2 = np.load(epath2)
-
-         f1 = emd1.files
-         for item in f1:
-            emd1 = (emd1[item])
-         f2 = emd2.files
-         for item in f2:
-            emd2 = (emd2[item])
-         #print (emd1.shape)
-         #print (emd2.shape)
-
-         p_val = stats.spearmanr(emd1, emd2)
-         #print (p_val)
-     
-         '''std1 = stats.tstd(emd1, axis=0)
-         std2 = stats.tstd(emd2, axis=0)
-         diff_std = abs((std1)-(std2))
-         print (diff_std)'''
-
-         diff_lst.append(p_val)
+    pairs1 = open(path+args.pairs, 'r')
+    lines_pairs1 = pairs1.readlines()
  
-         '''for E1, E2 in zip(os.listdir(args.emd_dirr1), os.listdir(args.emd_dirr2)):
-         if E1.endswith('.npz') and E2.endswith('.npz'):
-            emb1 = np.load(args.emd_dirr1+E1)
-            emb2 = np.load(args.emd_dirr2+E2)
-            diff = emd1 - emd2
-            trel = stats.ttest_rel(emd1, emd2, axis=1)
-            print (t_rel)
-            diff_lst.append(diff_std)'''
+    mod = swap(lines_pairs1)
+    plst=[]
+    clst= []  
+    ''' 
+    
+    for i in lines_pairs1:
+       
+       i = i.split()
+       P1 = i[0]
+       P2 = i[1]
+
+       epath1 = os.path.join(path+args.emd_dirr1 + P1 + '.npz')
+       emd1 = np.load(epath1)
+
+       epath2 = os.path.join(path+args.emd_dirr2 + P2 + '.npz')
+       emd2 = np.load(epath2)
+
+       f1 = emd1.files
+       for item in f1:
+         emd1 = (emd1[item])
+       f2 = emd2.files
+       for item in f2:
+         emd2 = (emd2[item])'''
+
+
+
+    '''
+    df = pd.DataFrame()
+    df['p'] = plst
+    df['c']= clst
+    sns.jointplot(df)
+    plt.xlabel('plst')
+    plt.ylabel('clst')
+    #name = args.type + '_pcor_hp_' + args.comment
+    plt.savefig('1.png', bbox_inches='tight')
+    plt.close()
+    sns.displot(a, kde=True)
+    plt.xlabel('Correlation values between homology pairs (Spearman)')
+    plt.ylabel('Count')
+    name = 'Homology_cval_hp_'+ args.comment
+    plt.savefig('{}.png'.format(name), bbox_inches='tight')
+    plt.close()
+    sns.distplot(clst)
+    plt.xlabel('Correlation values between homology pairs (Correlate Numpy)')
+    plt.ylabel('Count')
+    #name = args.type +'_pval_hp_'+ args.comment
+    plt.savefig('clst_np.png', bbox_inches='tight')
+    plt.close()'''
+
+
+def stack_embed(emd1, emd2):
+    print (emd1.shape, emd2.shape)   
+
+    plt.plot(emd1)
+    plt.plot(emd2)
+    plt.savefig('stacked.png', bbox_inches='tight')
+
+
+def acc_len(emd1, emd2, P1, P2, clst):
  
-         sns.scatterplot(emd1,emd2)
+   df = pd.read_csv('/home/a/aditi/pfs/current_projects/ProtEmbed/data/EXP-2-MultipleProtein/Protset1_len', sep = ",", names=['ID', 'Seq_len'])
+   length  = (df.loc[df['ID']==P1]['Seq_len'].values)[0]
 
-      plt.xlabel('hp 1 emd values')
-      plt.ylabel('hp 2 emd values')
-      name = args.type + '_pcor_hp_' + args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
- 
-      sns.distplot(diff_lst)
-      plt.xlabel('Correlation values between homology pairs')
-      plt.ylabel('Count')
-      name = args.type +'_pval_hp_'+ args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
+   if int(length) < 200:
+       clst.append(emd1)
 
-    if args.type == "Non-Homology":
-      print ("Non-homologous protein pairs")
+   return clst
+   
+   
+def moving_average(emd1, emd2):
+    emd1 = pd.Series(emd1)
+    a = emd1.rolling(window=10).mean()
+    print (a.shape)
+    emd2 = pd.Series(emd2)
+    b = emd2.rolling(window=10).mean()
+    print (b.shape)
+
+    plt.plot(a)
+    plt.plot(b)
+    plt.savefig('ma4.png', bbox_inches='tight')
+
+
+def homology(emd1, emd2, plst, clst):
+
+    p_val = stats.spearmanr(emd1, emd2)
+    print (p_val)
+
+    corr = np.correlate(emd1, emd2)
+    print (corr)
+       
+    plst.append(p_val[0])
+    clst.append(corr[0])
+    print (clst)
+
+    return plst, clst
+
+    """
+
+    plt.xlabel('hp 1 emd values')
+    plt.ylabel('hp 2 emd values')
+    name = args.type + '_pcor_hp_' + args.comment
+    plt.savefig('{}.png'.format(name), bbox_inches='tight')
+    plt.close()
+
+    sns.distplot(diff_lst)
+    plt.xlabel('Correlation values between homology pairs')
+    plt.ylabel('Count')
+    name = args.type +'_pval_hp_'+ args.comment
+    plt.savefig('{}.png'.format(name), bbox_inches='tight')
+    plt.close()"""
+
+def swap(lines):
       
-      pairs1 = open(args.pairs, 'r')
-      lines_pairs1 = pairs1.readlines()
-      
-      for i in lines_pairs1:
-         i = i.split()
-         P1 = i[0]
-         P2 = i[1]
+    for i in lines:
+        i = i.split()
+        P1 = i[0]
+        print (P1)
 
-         epath1 = os.path.join(args.emd_dirr1 + P1 + '.npz')
-         emd1 = np.load(epath1)
+        epath1 = os.path.join('/home/a/aditi/pfs/current_projects/ProtEmbed/data/EXP-2-MultipleProtein/ProtSet1/' + P1 + '.npz')
+        emd1 = np.load(epath1)
 
-         epath2 = os.path.join(args.emd_dirr2 + P2 + '.npz')
-         emd2 = np.load(epath2)
+        epath2 = os.path.join('/home/a/aditi/pfs/current_projects/ProtEmbed/data/EXP-2-MultipleProtein/mod_5/' + P1 + '_5' + '.npz')
+        emd2 = np.load(epath2)
 
-         f1 = emd1.files
-         for item in f1:
-            emd1 = (emd1[item])
-         f2 = emd2.files
-         for item in f2:
-            emd2 = (emd2[item])
-         
-         p_val = stats.spearmanr(emd1, emd2)
-     
-         diff_lst.append(p_val)
+        f1 = emd1.files
+        for item in f1:
+           emd1 = (emd1[item])
+        f2 = emd2.files
+        for item in f2:
+           emd2 = (emd2[item])
+       
+        p_val = stats.spearmanr(emd1, emd2)
+        print (p_val)
 
-         sns.scatterplot(emd1,emd2)
-      plt.xlabel('nhp 1 emd values')
-      plt.ylabel('nhp 2 emd values')
-      name = args.type + '_pcor_nhp_' + args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
- 
-      sns.distplot(diff_lst)
-      plt.xlabel('Correlation values between non-homologous pairs')
-      plt.ylabel('Count')
-      name = args.type +'_pval_nhp_'+ args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
+        plst.append(p_val[0])
 
-    if args.type == "Swap-motifs":
-      
-      pairs1 = open(args.pairs, 'r')
-      lines_pairs1 = pairs1.readlines()
-      
-      for i in lines_pairs1:
-         i = i.split()
-         P1 = i[0]
+    sns.displot(plst, kde=True)
+    plt.xlabel('Correlation values between original and modified pairs')
+    plt.ylabel('Count')
+    name = args.type +'_pval_mod_'+ args.comment
+    plt.savefig('{}.png'.format(name), bbox_inches='tight')
+    plt.close()
 
-         print (P1)
-
-         epath1 = os.path.join(args.emd_dirr1 + P1 + '.npz')
-         emd1 = np.load(epath1)
-         try:
-            epath2 = os.path.join(args.emd_dirr2 + P1 + '_10' + '.npz')
-            emd2 = np.load(epath2)
-         except FileNotFoundError:
-            continue
-
-         f1 = emd1.files
-         for item in f1:
-            emd1 = (emd1[item])
-         f2 = emd2.files
-         for item in f2:
-            emd2 = (emd2[item])
-         
-         p_val = stats.spearmanr(emd1, emd2)
-     
-         diff_lst.append(p_val)
-
-         sns.scatterplot(emd1,emd2)
-
-      plt.xlabel('original emd values')
-      plt.ylabel('modified emd values')
-      name = args.type + '_pcor_mod_' + args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
- 
-      sns.distplot(diff_lst)
-      plt.xlabel('Correlation values between original and modified pairs')
-      plt.ylabel('Count')
-      name = args.type +'_pval_mod_'+ args.comment
-      plt.savefig('{}.png'.format(name), bbox_inches='tight')
-      plt.close()
-
-
-      '''
-
+    """
     if args.type == "Swap-NC":
 
         print ("Swapped NC residues")
@@ -226,8 +221,23 @@ def main():
         plt.ylabel('Randomly shuffled emd values')
         name = args.type + '_pcor_Rshuf_' + args.comment
         plt.savefig('{}.png'.format(name), bbox_inches='tight')
-        plt.close()'''
+        plt.close()
+ 
+        std1 = stats.tstd(emd1, axis=0)
+         std2 = stats.tstd(emd2, axis=0)
+         diff_std = abs((std1)-(std2))
+         print (diff_std)
 
+ 
+        for E1, E2 in zip(os.listdir(args.emd_dirr1), os.listdir(args.emd_dirr2)):
+        if E1.endswith('.npz') and E2.endswith('.npz'):
+            emb1 = np.load(args.emd_dirr1+E1)
+            emb2 = np.load(args.emd_dirr2+E2)
+            diff = emd1 - emd2
+            trel = stats.ttest_rel(emd1, emd2, axis=1)
+            print (t_rel)
+            diff_lst.append(diff_std)
+            """
 
 def read_fasta_sequence(afile, query_id=''):
     seq_dict = {}
